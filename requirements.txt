@@ -2,4 +2,5 @@ flask
 flask-cors
 transformers
 torch
-sqlite3
+
+
