@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import sqlite3
 from transformers import pipeline
@@ -6,6 +6,7 @@ import random
 from datetime import datetime
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -40,6 +41,11 @@ def init_db():
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     conn.commit()
     conn.close()
+
+# Serve the index.html file directly
+@app.route("/")
+def index():
+    return send_file("index.html")
 
 @app.route("/generate-story", methods=["POST"])
 @limiter.limit("5 per minute")  # Rate limit story generation
