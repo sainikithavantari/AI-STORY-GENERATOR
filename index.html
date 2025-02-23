@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Story Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #007BFF;
+        }
+
+        input, select {
+            width: 90%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #333;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            background-color: #444;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 25px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: #007BFF;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .story-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #222;
+            border-radius: 10px;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .story-list {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .story-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .story-list li {
+            background: #292929;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.5s ease-in-out;
+        }
+
+        .story-list button {
+            background: #ff4d4d;
+            font-size: 14px;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .story-list button:hover {
+            background: #cc0000;
+        }
+
+        .edit-button {
+            background: #28a745;
+            margin-right: 10px;
+        }
+
+        .edit-button:hover {
+            background: #218838;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007BFF;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .feedback-buttons {
+            margin-top: 10px;
+        }
+
+        .feedback-buttons button {
+            background: #28a745;
+            margin-right: 5px;
+        }
+
+        .feedback-buttons button:hover {
+            background: #218838;
+        }
+
+        .export-options {
+            margin-top: 10px;
+        }
+
+        .export-options select {
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AI Story Generator</h1>
+        <input type="text" id="theme" placeholder="Enter story theme (e.g., Fantasy)">
+        <input type="text" id="character" placeholder="Enter main character">
+        <select id="length">
+            <option value="short">Short</option>
+            <option value="medium" selected>Medium</option>
+            <option value="long">Long</option>
+        </select>
+        <select id="category">
+            <option value="General">General</option>
+            <option value="Adventure">Adventure</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Romance">Romance</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+        </select>
+        <button onclick="generateStory()">Generate Story</button>
+        <button onclick="generateRandomStory()">Generate Random Story</button>
+
+        <div class="loading-spinner" id="loading-spinner"></div>
+
+        <div class="story-section" id="story-container">
+            <h2>Generated Story</h2>
+            <p id="story-content">Your AI-generated story will appear here...</p>
+            <div class="feedback-buttons">
+                <button onclick="rateStory('up')">👍</button>
+                <button onclick="rateStory('down')">👎</button>
+            </div>
+            <div class="export-options">
+                <select id="export-format">
+                    <option value="txt">Export as .txt</option>
+                    <option value="pdf">Export as .pdf</option>
+                </select>
+                <button onclick="exportStory()">Export Story</button>
+            </div>
+            <button onclick="saveStory()">Save Story</button>
+        </div>
+
+        <div class="story-list">
+            <h2>Saved Stories</h2>
+            <input type="text" id="search" placeholder="Search stories by theme or character" oninput="fetchStories()">
+            <select id="category-filter" onchange="fetchStories()">
+                <option value="">All Categories</option>
+                <option value="General">General</option>
+                <option value="Adventure">Adventure</option>
+                <option value="Mystery">Mystery</option>
+                <option value="Romance">Romance</option>
+                <option value="Sci-Fi">Sci-Fi</option>
+            </select>
+            <select id="length-filter" onchange="fetchStories()">
+                <option value="">All Lengths</option>
+                <option value="short">Short</option>
+                <option value="medium">Medium</option>
+                <option value="long">Long</option>
+            </select>
+            <ul id="stories-list">
+                <!-- Stories will be displayed here -->
+            </ul>
+            <div>
+                <button onclick="previousPage()">Previous</button>
+                <button onclick="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:5000';
+        let currentPage = 1;
+        let currentStoryId = null;
+
+        function generateStory() {
+            const theme = document.getElementById("theme").value;
+            const character = document.getElementById("character").value;
+            const length = document.getElementById("length").value;
+            const category = document.getElementById("category").value;
+            const spinner = document.getElementById("loading-spinner");
+
+            spinner.style.display = "block";
+
+            fetch(`${apiUrl}/generate-story`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ theme, character, length, category })
+            })
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = "none";
+                document.getElementById("story-container").style.display = "block";
+                document.getElementById("story-content").innerText = data.story;
+                currentStoryId = null; // Reset current story ID for new story
+            })
+            .catch(error => {
+                spinner.style.display = "none";
+                console.error("Error:", error);
+            });
+        }
+
+        function generateRandomStory() {
+            fetch(`${apiUrl}/random-story`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("story-container").style.display = "block";
+                document.getElementById("story-content").innerText = data.story;
+                currentStoryId = null; // Reset current story ID for new story
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function saveStory() {
+            const theme = document.getElementById("theme").value;
+            const character = document.getElementById("character").value;
+            const length = document.getElementById("length").value;
+            const category = document.getElementById("category").value;
+            const story = document.getElementById("story-content").innerText;
+
+            fetch(`${apiUrl}/generate-story`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ theme, character, length, category, story })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Story saved successfully!");
+                fetchStories();
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function fetchStories() {
+            const search = document.getElementById("search").value;
+            const category = document.getElementById("category-filter").value;
+            const length = document.getElementById("length-filter").value;
+            fetch(`${apiUrl}/get-stories?page=${currentPage}&search=${search}&category=${category}&length=${length}`)
+            .then(response => response.json())
+            .then(data => {
+                const stories = data.stories;
+                const listElement = document.getElementById("stories-list");
+                listElement.innerHTML = "";
+                stories.forEach(story => {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `
+                        <span>${story[1]} - ${story[2]} (${story[4]}) - Views: ${story[6] || 0}</span>
+                        <div>
+                            <button class="edit-button" onclick="editStory(${story[0]})">Edit</button>
+                            <button onclick="deleteStory(${story[0]})">Delete</button>
+                        </div>
+                    `;
+                    listElement.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function editStory(id) {
+            const newStory = prompt("Edit your story:");
+            if (newStory) {
+                fetch(`${apiUrl}/update-story/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ story: newStory })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    fetchStories();
+                })
+                .catch(error => console.error("Error:", error));
+            }
+        }
+
+        function deleteStory(id) {
+            if (confirm("Are you sure you want to delete this story?")) {
+                fetch(`${apiUrl}/delete-story/${id}`, { method: "DELETE" })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    fetchStories();
+                })
+                .catch(error => console.error("Error:", error));
+            }
+        }
+
+        function rateStory(feedback) {
+            alert(`You rated the story: ${feedback}`);
+            // Send feedback to the backend (implement this in the backend)
+        }
+
+        function exportStory() {
+            const format = document.getElementById("export-format").value;
+            alert(`Exporting story as .${format}`);
+            // Implement export logic based on the selected format
+        }
+
+        function nextPage() {
+            currentPage++;
+            fetchStories();
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchStories();
+            }
+        }
+
+        window.onload = fetchStories;
+    </script>
+
+</body>
+</html>
